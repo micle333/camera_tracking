@@ -12,7 +12,7 @@ int main() {
         std::cerr << "Камера открыта" << std::endl;
     }
 
-    cv::Mat frame, gray, prevGray, diff, thresh;
+    cv::Mat frame, hsv, mask, gray, prevGray, diff, thresh;
     std::vector<std::vector<cv::Point>> contours;
 
     bool isTracking = false; // Флаг для трекинга
@@ -24,14 +24,20 @@ int main() {
         cap >> frame;
         if (frame.empty()) break;
 
-        // Преобразование в градации серого
+        // Преобразование в HSV
+        cv::cvtColor(frame, hsv, cv::COLOR_BGR2HSV);
+
+        // Создание маски для зеленого цвета (диапазон для зеленого в HSV)
+        cv::inRange(hsv, cv::Scalar(40, 40, 40), cv::Scalar(85, 255, 255), mask);
+
+        // Преобразование в градации серого для дальнейшей обработки
         cv::cvtColor(frame, gray, cv::COLOR_BGR2GRAY);
 
         int frameCenterX = frame.cols / 2;
         int frameCenterY = frame.rows / 2;
 
         if (!prevGray.empty()) {
-            // Если трекинг не активен, ищем движущийся объект
+            // Если трекинг не активен, ищем движущийся зеленый объект
             if (!isTracking) {
                 // Вычисление разницы между кадрами
                 cv::absdiff(gray, prevGray, diff);
@@ -39,11 +45,14 @@ int main() {
                 // Бинаризация (пороговая обработка)
                 cv::threshold(diff, thresh, 25, 255, cv::THRESH_BINARY);
 
-                // Поиск контуров движущихся объектов
+                // Применяем маску зеленого цвета к разнице
+                cv::bitwise_and(thresh, mask, thresh);
+
+                // Поиск контуров движущихся зеленых объектов
                 cv::findContours(thresh, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
 
                 for (const auto& contour : contours) {
-                    if (cv::contourArea(contour) > 500) { // Фильтрация по площади
+                    if (cv::contourArea(contour) > 1500) { // Фильтрация по площади
                         // Определяем прямоугольник вокруг объекта
                         trackedObject = cv::boundingRect(contour);
 
@@ -52,7 +61,7 @@ int main() {
                         tracker->init(frame, trackedObject);
                         isTracking = true;
 
-                        std::cout << "Обнаружен объект для трекинга." << std::endl;
+                        std::cout << "Обнаружен зеленый объект для трекинга." << std::endl;
                         break; // Начинаем трекинг первого обнаруженного объекта
                     }
                 }
@@ -88,7 +97,7 @@ int main() {
         }
 
         // Отображение текущего кадра
-        cv::imshow("Движущиеся объекты", frame);
+        cv::imshow("Движущиеся зеленые объекты", frame);
 
         // Обновление предыдущего кадра
         gray.copyTo(prevGray);
