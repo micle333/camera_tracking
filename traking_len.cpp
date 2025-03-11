@@ -1,6 +1,13 @@
 #include <opencv2/opencv.hpp>
 #include <opencv2/tracking.hpp>
 #include <iostream>
+#include <fcntl.h>
+#include <unistd.h>
+#include <termios.h>
+#include <cstring>
+
+#define SERIAL_PORT "/dev/ttyUSB0"
+int16_t data[4] = {0, 0, -30, 40};
 
 // Функция для инициализации камеры
 cv::VideoCapture initializeCamera() {
@@ -49,9 +56,13 @@ void drawCenterAndDeviation(cv::Mat& frame, const cv::Rect& trackedObject, int f
     int deviationX = objectCenter.x - frameCenterX;
     int deviationY = objectCenter.y - frameCenterY;
 
+    data[0] = deviationX;
+    data[1] = deviationY;
+
     // Отображаем отклонение
     std::string deviationText = "X: " + std::to_string(deviationX) + "  Y: " + std::to_string(deviationY);
     cv::putText(frame, deviationText, cv::Point(10, 30), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(255, 255, 255), 2);
+    
 }
 
 // Функция для поиска и трекинга первого объекта
@@ -78,12 +89,38 @@ bool detectAndTrackMovingObject(cv::Mat& frame, cv::Mat& gray, cv::Mat& prevGray
     return false;
 }
 
+
 int main() {
     cv::VideoCapture cap = initializeCamera();
     cv::Mat frame, gray, prevGray;
     cv::Rect trackedObject;
     cv::Ptr<cv::Tracker> tracker;
     bool isTracking = false;
+    cv::namedWindow("tracking", cv::WINDOW_NORMAL); 
+    cv::resizeWindow("tracking", 640, 360);
+
+    ///////////////////////// Подключение Arduino /////////////////////////
+    int serial_port = open(SERIAL_PORT, O_RDWR | O_NOCTTY);
+    if (serial_port < 0) {
+        std::cerr << "Ошибка открытия порта!" << std::endl;
+        //return 1;
+    }
+
+    struct termios tty;
+    if (tcgetattr(serial_port, &tty) != 0) {
+        std::cerr << "Ошибка получения параметров порта!" << std::endl;
+        //return 1;
+    }
+
+    cfsetospeed(&tty, B9600);
+    cfsetispeed(&tty, B9600);
+    tty.c_cflag = CS8 | CREAD | CLOCAL;
+    tty.c_iflag = IGNPAR;
+    tcsetattr(serial_port, TCSANOW, &tty);
+
+    
+    ///////////////////////// Подключение Arduino /////////////////////////
+
 
     while (true) {
         cap >> frame;
@@ -107,7 +144,9 @@ int main() {
         }
 
         drawCenterAndDeviation(frame, trackedObject, frameCenterX, frameCenterY);
-        cv::imshow("Движущиеся объекты", frame);
+        cv::imshow("tracking", frame);
+        
+	write(serial_port, data, sizeof(data));
 
         // Обновляем предыдущий кадр
         gray.copyTo(prevGray);
@@ -116,6 +155,7 @@ int main() {
     }
 
     cap.release();
+    close(serial_port);
     cv::destroyAllWindows();
     return 0;
 }

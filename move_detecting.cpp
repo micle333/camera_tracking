@@ -45,8 +45,8 @@ int main() {
                 // Бинаризация (пороговая обработка)
                 cv::threshold(diff, thresh, 25, 255, cv::THRESH_BINARY);
 
-                // Применяем маску зеленого цвета к разнице
-                cv::bitwise_and(thresh, mask, thresh);
+                // // Применяем маску зеленого цвета к разнице
+                // cv::bitwise_and(thresh, mask, thresh);
 
                 // Поиск контуров движущихся зеленых объектов
                 cv::findContours(thresh, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);

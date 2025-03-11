@@ -1,0 +1,3 @@
+/home/dronoved/turrel/camera_tracking/gst_lib/CMakeFiles/rebuild_cache.dir
+/home/dronoved/turrel/camera_tracking/gst_lib/CMakeFiles/gst_app.dir
+/home/dronoved/turrel/camera_tracking/gst_lib/CMakeFiles/edit_cache.dir

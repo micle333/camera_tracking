@@ -6,10 +6,6 @@ trak:
 	g++ -std=c++11 -o detect_objects traking_len.cpp `pkg-config --cflags --libs opencv4`
 	./detect_objects
 
-gst_flash:
-	g++ -o test gst_opencv_test.cpp `pkg-config --cflags --libs opencv4 gstreamer-1.0 gstreamer-app-1.0` -lpthread
-	./test
-
 gst:
 	g++ -std=c++11 -o test gst_camera_test.cpp `pkg-config --cflags --libs opencv4`
 	./test

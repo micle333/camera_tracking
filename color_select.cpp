@@ -17,8 +17,11 @@ int main() {
     int lowerV = 50, upperV = 255; // Диапазон яркости (V)
 
     // Создаем окно для отображения
-    cv::namedWindow("Frame", cv::WINDOW_AUTOSIZE);
-    cv::namedWindow("Mask", cv::WINDOW_AUTOSIZE);
+    cv::namedWindow("Frame", cv::WINDOW_NORMAL);
+    cv::namedWindow("Mask", cv::WINDOW_NORMAL);
+    cv::resizeWindow("Frame", 640, 360);
+    cv::resizeWindow("Mask", 640, 360);
+
 
     // Создаем трекбары для настройки диапазонов
     cv::createTrackbar("Lower H", "Frame", &lowerH, 179);
